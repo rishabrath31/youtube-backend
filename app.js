@@ -2,11 +2,11 @@ const express = require('express');
 const app = express();
 const mongoose = require('mongoose')
 require('dotenv').config()
-const userRoute = require('../api/routes/user')
-const videoRoute = require('../api/routes/video')
+const userRoute = require('./routes/user')
+const videoRoute = require('./routes/video')
 const bodyParser = require('body-parser')
 const fileUpload = require('express-fileupload')
-const commentRoute = require('../api/routes/comment')
+const commentRoute = require('./routes/comment')
 
 
 const connectWithDatabase = async () => {
