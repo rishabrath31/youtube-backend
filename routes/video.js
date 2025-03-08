@@ -57,14 +57,13 @@ Router.put("/:videoId", checkAuth, async (req, res) => {
     const token = req.headers.authorization.split(" ")[1];
     const verifiedUser = await jwt.verify(token, "rishab secret key");
 
-    const video = await Video.findById(req.params.videoId); 
+    const video = await Video.findById(req.params.videoId);
     console.log(video);
 
     if (video.user_id == verifiedUser._id) {
-
       if (req.files) {
         // update thumbnail and text data
-        await cloudinary.uploader.destroy(video.thumbnailId); 
+        await cloudinary.uploader.destroy(video.thumbnailId);
 
         const uploadedThumbnail = await cloudinary.uploader.upload(
           req.files.thumbnail.tempFilePath
@@ -75,14 +74,14 @@ Router.put("/:videoId", checkAuth, async (req, res) => {
           description: req.body.description,
           category: req.body.category,
           tags: req.body.tags.split(","),
-          thumbnailUrl: uploadedThumbnail.secure_url, 
-          thumbnailId: uploadedThumbnail.public_id, 
+          thumbnailUrl: uploadedThumbnail.secure_url,
+          thumbnailId: uploadedThumbnail.public_id,
         };
 
         const updatedVideoDetail = await Video.findByIdAndUpdate(
           req.params.videoId,
           updatedData,
-          { new: true } 
+          { new: true }
         );
 
         res.status(200).json({ updatedVideo: updatedVideoDetail });
@@ -109,42 +108,38 @@ Router.put("/:videoId", checkAuth, async (req, res) => {
     }
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: err.message }); 
+    res.status(500).json({ error: err.message });
   }
 });
 
 // Delete Video API
 Router.delete("/:videoId", checkAuth, async (req, res) => {
   try {
-
     const token = req.headers.authorization.split(" ")[1];
     const verifiedUser = await jwt.verify(token, "rishab secret key");
-    const video = await Video.findById(req.params.videoId)
+    const video = await Video.findById(req.params.videoId);
 
-    if(video.user_id == verifiedUser._id){
+    if (video.user_id == verifiedUser._id) {
       // Delete the video, thumbnail and data from database
       await cloudinary.uploader.destroy(video.thumbnailId);
-      await cloudinary.uploader.destroy(video.videoId, { resource_type: 'video' });
-      const deletedResponse =  await Video.findByIdAndDelete(req.params.videoId);
-      res.status(200).json({ deletedResponse:deletedResponse   
-
+      await cloudinary.uploader.destroy(video.videoId, {
+        resource_type: "video",
       });
-    }else {
+      const deletedResponse = await Video.findByIdAndDelete(req.params.videoId);
+      res.status(200).json({ deletedResponse: deletedResponse });
+    } else {
       return res.status(500).json({
         error: "You are not authorized to delete this video",
       });
     }
-   
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error:err });
+    res.status(500).json({ error: err });
   }
 });
 
-
-
 // LIKE API
-Router.put('/like/:videoId', checkAuth, async (req, res) => {
+Router.put("/like/:videoId", checkAuth, async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     const verifiedUser = await jwt.verify(token, "rishab secret key");
@@ -156,18 +151,17 @@ Router.put('/like/:videoId', checkAuth, async (req, res) => {
         error: "You have already liked this video",
       });
     }
-    if (video.dislikedBy.includes(verifiedUser._id)){
+    if (video.dislikedBy.includes(verifiedUser._id)) {
       video.dislikes -= 1;
       video.dislikedBy = video.dislikedBy.filter(
-        userId => userId.toString() != verifiedUser._id
+        (userId) => userId.toString() != verifiedUser._id
       );
     }
 
     video.likes += 1;
     video.likedBy.push(verifiedUser._id);
     await video.save();
-    res.status(200).json({ msg: 'Liked' });
-
+    res.status(200).json({ msg: "Liked" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });
@@ -176,7 +170,7 @@ Router.put('/like/:videoId', checkAuth, async (req, res) => {
 
 // Dislike API
 
-Router.put('/dislike/:videoId', checkAuth, async (req, res) => {
+Router.put("/dislike/:videoId", checkAuth, async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     const verifiedUser = await jwt.verify(token, "rishab secret key");
@@ -188,21 +182,19 @@ Router.put('/dislike/:videoId', checkAuth, async (req, res) => {
         error: "You have already disliked this video",
       });
     }
-     if (video.likedBy.includes(verifiedUser._id)){
+    if (video.likedBy.includes(verifiedUser._id)) {
       video.likes -= 1;
       video.likedBy = video.likedBy.filter(
-        userId => userId.toString() != verifiedUser._id
+        (userId) => userId.toString() != verifiedUser._id
       );
     }
-
 
     video.dislikes += 1;
     video.dislikedBy.push(verifiedUser._id);
     await video.save();
     res.status(200).json({
-      msg: 'Disliked',
+      msg: "Disliked",
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });
@@ -210,17 +202,35 @@ Router.put('/dislike/:videoId', checkAuth, async (req, res) => {
 });
 
 // Views API
-Router.put('/views/:videoId', async (req, res) => {
-  try{
+Router.put("/views/:videoId", async (req, res) => {
+  try {
     const video = await Video.findById(req.params.videoId);
     console.log(video);
     video.views += 1;
     await video.save();
-    res.status(200).json({ msg: 'Viewed' });
-  }
-  catch (err) {
+    res.status(200).json({ msg: "Viewed" });
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });
   }
-})
+});
+
+Router.post("/videos", async (req, res) => {
+  try {
+    const { skip, limit } = req.body;
+
+    const sortBy = {
+      createdAt: -1,
+    };
+
+    const videos = await Video.find()
+      .sort(sortBy)
+      .skip(skip || 0)
+      .limit(limit || 0);
+
+    return res.status(200).json({ error: false, videos });
+  } catch (error) {
+    return res.status(500).json({ error: true, Error: error.message });
+  }
+});
 module.exports = Router;
