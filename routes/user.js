@@ -16,33 +16,24 @@ cloudinary.config({
 
 Router.post("/signup", async (req, res) => {
   try {
-    const users = await User.find({ email: req.body.email });
-    if (users.length > 0) {
-      console.log(`Signup failed: Email ${req.body.email} already exists.`);
-      return res.status(500).json({ error: "Email already exists" });
-    } else {
-      console.log(`No existing user found with email ${req.body.email}. Proceeding with signup...`);
+    const existing_User = await User.findOne({ email: req.body.email });
+    if (existing_User  !== null)
+    {
+      return res.status(400).json({ error:true ,reason: "Email already exists" });
     }
-    if (users.length > 0) {
-      return res.status(500).json({ error: "Email already exists" });
-    }
-    const hashCode = await bcrypt.hash(req.body.password, 10);
-    const uploadedImage = await cloudinary.uploader.upload(
-      req.files?.logo?.tempFilePath 
-    );
-
-    const newUser = new User({
+   
+     const hashCode = await bcrypt.hash(req.body.password, 10);
+     const newUser = new User({
       _id: new mongoose.Types.ObjectId(),
       channelName: req.body.channelName,
       email: req.body.email,
       phone: req.body.phone,
       password: hashCode,
-      logoUrl: uploadedImage.secure_url,
-      logoId: uploadedImage.public_id,
+   
     });
 
     const user = await newUser.save();
-    res.status(200).json({ newUser: user });
+    res.status(200).json({error:false, newUser: user });
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -58,13 +49,13 @@ Router.post("/login", async (req, res) => {
     const users = await User.find({ email: req.body.email });
     console.log(users);
     if (users.length == 0) {
-      return res.status(500).json({ error: "Email is not registered" });
+      return res.status(400).json({ error:true, reason: "Email is not registered" });
     }
 
     const isValid = await bcrypt.compare(req.body.password, users[0].password );
 
     if (!isValid) {
-      return res.status(500).json({ error: "Incorrect password" });
+      return res.status(400).json({ error:true, reason: "Incorrect password" });
     }
 
     const token = jwt.sign(
@@ -80,6 +71,7 @@ Router.post("/login", async (req, res) => {
     );
     
     res.status(200).json({
+      error:false, 
       _id: users[0]._id,
       channelName: users[0].channelName,
       email: users[0].email,
@@ -116,8 +108,8 @@ Router.put('/subscribe/:userBId', checkAuth, async (req, res) => {
 
     // Check if already subscribed
     if (userB.subscribedBy.includes(userA._id)) {
-      return res.status(500).json({
-        error: 'You are already subscribed to this user',
+      return res.status(400).json({
+        error:true, reason: 'You are already subscribed to this user',
       });
     }
 
@@ -133,6 +125,7 @@ Router.put('/subscribe/:userBId', checkAuth, async (req, res) => {
 
     // Send success response
     res.status(200).json({
+      error:false,
       msg: 'Subscribed',
     });
   } catch (err) {
@@ -155,8 +148,8 @@ Router.put('/unsubscribe/:userBId', checkAuth, async (req, res) => {
 
     // Check if userA is actually subscribed to userB
     if (!userB.subscribedBy.includes(userA._id)) {
-      return res.status(500).json({
-        error: 'You are not subscribed to this user',
+      return res.status(400).json({
+        error:true, reason: 'You are not subscribed to this user',
       });
     }
 
@@ -174,6 +167,7 @@ Router.put('/unsubscribe/:userBId', checkAuth, async (req, res) => {
 
     // Send success response
     res.status(200).json({
+      error:false,
       msg: 'Unsubscribed successfully',
     });
 

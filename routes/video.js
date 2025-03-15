@@ -27,7 +27,7 @@ Router.post("/upload", checkAuth, async (req, res) => {
     );
 
     const newVideo = new Video({
-      // ✅ FIXED: Changed video to Video
+      // FIXED: Changed video to Video
       _id: new mongoose.Types.ObjectId(),
       title: req.body.title,
       description: req.body.description,
@@ -42,7 +42,7 @@ Router.post("/upload", checkAuth, async (req, res) => {
 
     const newUploadedVideoData = await newVideo.save();
 
-    res.status(200).json({
+    res.status(200).json({error:false,
       newVideo: newUploadedVideoData,
     });
   } catch (err) {
@@ -84,7 +84,7 @@ Router.put("/:videoId", checkAuth, async (req, res) => {
           { new: true }
         );
 
-        res.status(200).json({ updatedVideo: updatedVideoDetail });
+        res.status(200).json({ error:false,updatedVideo: updatedVideoDetail });
       } else {
         const updatedData = {
           title: req.body.title,
@@ -99,7 +99,7 @@ Router.put("/:videoId", checkAuth, async (req, res) => {
           { new: true }
         );
 
-        res.status(200).json({ updatedVideo: updatedVideoDetail });
+        res.status(200).json({ error:false , updatedVideo: updatedVideoDetail });
       }
     } else {
       return res.status(500).json({
@@ -126,10 +126,10 @@ Router.delete("/:videoId", checkAuth, async (req, res) => {
         resource_type: "video",
       });
       const deletedResponse = await Video.findByIdAndDelete(req.params.videoId);
-      res.status(200).json({ deletedResponse: deletedResponse });
+      res.status(200).json({error:false ,  deletedResponse: deletedResponse });
     } else {
-      return res.status(500).json({
-        error: "You are not authorized to delete this video",
+      return res.status(400).json({
+        error:true, reason: "You are not authorized to delete this video",
       });
     }
   } catch (err) {
@@ -147,8 +147,8 @@ Router.put("/like/:videoId", checkAuth, async (req, res) => {
     const video = await Video.findById(req.params.videoId);
     console.log(video);
     if (video.likedBy.includes(verifiedUser._id)) {
-      return res.status(500).json({
-        error: "You have already liked this video",
+      return res.status(400).json({
+        error:true, reason: "You have already liked this video",
       });
     }
     if (video.dislikedBy.includes(verifiedUser._id)) {
@@ -161,7 +161,7 @@ Router.put("/like/:videoId", checkAuth, async (req, res) => {
     video.likes += 1;
     video.likedBy.push(verifiedUser._id);
     await video.save();
-    res.status(200).json({ msg: "Liked" });
+    res.status(200).json({error:false ,  msg: "Liked" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });
@@ -169,7 +169,6 @@ Router.put("/like/:videoId", checkAuth, async (req, res) => {
 });
 
 // Dislike API
-
 Router.put("/dislike/:videoId", checkAuth, async (req, res) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
@@ -178,8 +177,8 @@ Router.put("/dislike/:videoId", checkAuth, async (req, res) => {
     const video = await Video.findById(req.params.videoId);
     console.log(video);
     if (video.dislikedBy.includes(verifiedUser._id)) {
-      return res.status(500).json({
-        error: "You have already disliked this video",
+      return res.status(400).json({
+        error:true, reason: "You have already disliked this video",
       });
     }
     if (video.likedBy.includes(verifiedUser._id)) {
@@ -192,7 +191,7 @@ Router.put("/dislike/:videoId", checkAuth, async (req, res) => {
     video.dislikes += 1;
     video.dislikedBy.push(verifiedUser._id);
     await video.save();
-    res.status(200).json({
+    res.status(200).json({error:false , 
       msg: "Disliked",
     });
   } catch (err) {
@@ -208,7 +207,7 @@ Router.put("/views/:videoId", async (req, res) => {
     console.log(video);
     video.views += 1;
     await video.save();
-    res.status(200).json({ msg: "Viewed" });
+    res.status(200).json({ error:false , msg: "Viewed" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err });

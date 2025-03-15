@@ -7,9 +7,10 @@ const checkAuth = require("../middleware/checkAuth");
 
 
 
-Router.post('/new-comment/:videoId', async (req, res) => {
+Router.post('/new-comment/:videoId',checkAuth, async (req, res) => {
   try {
     // Extract token
+    console.log("Hello");
     const token = req.headers.authorization.split(" ")[1];
     const verifiedUser = jwt.verify(token, "rishab secret key"); 
     console.log(verifiedUser);
@@ -33,7 +34,7 @@ Router.post('/new-comment/:videoId', async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(400).json({ message: err.message });
+    res.status(400).json({error:true,  reason: err.message });
   }
 });
 
@@ -41,7 +42,7 @@ Router.post('/new-comment/:videoId', async (req, res) => {
 Router.get('/:videoId', async (req, res) => {
   try {
     const comments = await Comment.find({ videoId: req.params.videoId }).populate('userId','channelName logoUrl');
-    res.status(200).json({ commentList: comments });
+    res.status(200).json({ error:false,commentList: comments });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
@@ -66,7 +67,7 @@ Router.put('/:commentId', checkAuth, async (req, res) => {
     comment.commentText = req.body.commentText;
     await comment.save();
     
-    res.status(200).json({ message: 'Comment updated successfully', comment });
+    res.status(200).json({error:false, message: 'Comment updated successfully', comment });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'You are not authorized to perform this action' });
@@ -89,7 +90,7 @@ Router.delete('/:commentId', checkAuth, async (req, res) => {
 
     await Comment.findByIdAndDelete(req.params.commentId);
     
-    res.status(200).json({ message: 'Comment deleted successfully' });
+    res.status(200).json({error:false, message: 'Comment deleted successfully' });
 
   } catch (err) {
     console.error(err);
