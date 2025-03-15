@@ -8,6 +8,8 @@ const bodyParser = require('body-parser')
 const fileUpload = require('express-fileupload')
 const commentRoute = require('./routes/comment')
 const cors = require("cors")
+const cookieParser = require("cookie-parser")
+
 
 
 const connectWithDatabase = async () => {
@@ -28,9 +30,12 @@ app.use(fileUpload({
   tempFileDir : '/tmp/'
 }));
 
-
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+app.use(cookieParser())
 app.use('/user',userRoute);
 app.use('/video',videoRoute);
 app.use('/comment',commentRoute);
+
 
 module.exports = app;
